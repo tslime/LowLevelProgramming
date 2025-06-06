@@ -5,7 +5,7 @@ section .data
         msg2 db "Enter your second number: ",32
         len2 equ $ - msg2
 
-        msg3 db "Press the number corresponding to the opretion you would like to execute: 1.addition, 2.subtraction, 3.multiplication, 4.division: ",32
+        msg3 db "Press the number corresponding to the operation you would like to execute: 1.addition, 2.subtraction, 3.multiplication, 4.division: ",32
         len3 equ $ - msg3
 
         msg4 db "The result of your arithmetic operation is: ",32
@@ -44,6 +44,18 @@ _start:
         mov rsi,input1
         mov rdx,32
         syscall
+        jmp verify_sign1
+
+
+verify_sign1:
+        mov al,[rsi]
+        cmp al,'-'
+        je mark_sign1
+        jmp reload1
+
+mark_sign1:
+        mov byte [sign_holder],'-'
+        inc rsi
         jmp reload1
 
 
@@ -55,7 +67,7 @@ reload1:
 convert1:
         mov al,[rsi]
         cmp al,10
-        je second_input
+        je negative_conversion1
         sub al,'0'
         movzx rcx,al
         imul rax, qword [rbx],10
@@ -63,6 +75,13 @@ convert1:
         mov [rbx],rax
         inc rsi
         jmp convert1
+
+negative_conversion1:
+        cmp byte [sign_holder],'-'
+        jne second_input
+        neg qword [buffer1]
+        jmp second_input
+
 
 second_input:
         mov rax,1
@@ -76,7 +95,20 @@ second_input:
         mov rsi,input2
         mov rdx,32
         syscall
+        jmp verify_sign2
+
+verify_sign2:
+        mov byte [sign_holder],0
+        mov al,[rsi]
+        cmp al,'-'
+        je mark_sign2
         jmp reload2
+
+mark_sign2:
+        mov byte [sign_holder],'-'
+        inc rsi
+        jmp reload2
+
 
 reload2:
         mov rbx,buffer2
@@ -86,7 +118,7 @@ reload2:
 convert2:
         mov al,[rsi]
         cmp al,10
-        je a_operation
+        je negative_conversion2
         sub al,'0'
         movzx rcx,al
         imul rax, qword [rbx],10
@@ -94,7 +126,13 @@ convert2:
         mov [rbx],rax
         inc rsi
         jmp convert2
-        
+
+negative_conversion2:
+        cmp byte [sign_holder],'-'
+        jne a_operation
+        neg qword [buffer2]
+        jmp a_operation
+
 
 a_operation:
         mov rax,1
@@ -124,23 +162,21 @@ addition:
         add rbx,[buffer2]
         mov rax,rbx
         mov rbx,0
-        jmp convert
+        jmp sign_check
 
 subtraction:
         mov rbx,[buffer1]
         sub rbx,[buffer2]
         mov rax,rbx
         mov rbx,0
-        test rax,rax
-        js sign
-        jmp convert
+        jmp sign_check
 
 multiplication:
         mov rbx,[buffer1]
         imul rbx,[buffer2]
         mov rax,rbx
         mov rbx,0
-        jmp convert
+        jmp sign_check
 
 division:
         mov rax,[buffer1]
@@ -148,10 +184,15 @@ division:
         mov rdx,0
         mov rbx,0
         div rcx
+        jmp sign_check
+
+sign_check:
+        test rax,rax
+        js complement
         jmp convert
 
 
-sign:
+complement:
         neg rax
         mov byte [sign_holder],'-'
         jmp convert
