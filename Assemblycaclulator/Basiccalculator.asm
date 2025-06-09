@@ -183,7 +183,8 @@ division:
         mov rcx,[buffer2]
         mov rdx,0
         mov rbx,0
-        div rcx
+        cqo
+        idiv rcx
         jmp sign_check
 
 sign_check:
