@@ -22,7 +22,7 @@ section .data
 
         negative dq -1.0
 
-        precision dq 1000.0
+        precision dq 100000.0
 
 section .bss
         input1 resb 8
@@ -328,14 +328,14 @@ reload5:
 
 convert_decimal_to_ascii:
         mov rdx,0
-        cmp rax,0
-        je reverse_resulting_ascii_decimal
         div rcx
         add dl,'0'
         mov [rsi],dl
-        inc rsi
         inc rbx
-        jmp decimal_storage
+        cmp rax,0
+        je decimal_storage
+        inc rsi
+        jmp convert_decimal_to_ascii
 
 decimal_storage:
         mov rcx,result_decimal_ascii
@@ -348,9 +348,9 @@ reverse_resulting_ascii_decimal:
         mov rax,0
         cmp rbx,0
         je reload6
-        dec rsi
         mov al,[rsi]
         mov [rcx],al
+        dec rsi
         inc rcx
         dec rbx
         jmp reverse_resulting_ascii_decimal
@@ -366,6 +366,7 @@ reload6:
 convert_fractional_to_ascii:
         mov rdx,0
         div rcx
+        add dl,'0'
         mov [rsi],dl
         inc rbx
         cmp rax,0
